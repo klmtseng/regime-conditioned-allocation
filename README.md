@@ -68,7 +68,7 @@ See the write-up linked above for the full narrative. Headline numbers below.
 No proprietary data, client information, or employer strategies used at any stage.
 
 ---
-
+**Python 3.11+ required.** Tested on Python 3.11 and 3.12.
 ## Quick Start
 
 ```bash
