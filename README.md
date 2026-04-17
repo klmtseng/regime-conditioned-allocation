@@ -68,8 +68,10 @@ See the write-up linked above for the full narrative. Headline numbers below.
 No proprietary data, client information, or employer strategies used at any stage.
 
 ---
-**Python 3.11+ required.** Tested on Python 3.11 and 3.12.
+
 ## Quick Start
+
+**Requires Python 3.11 or newer.** Verified on Python 3.11 and 3.12.
 
 ```bash
 git clone https://github.com/klmtseng/regime-conditioned-allocation.git
@@ -86,6 +88,11 @@ python regime_pipeline.py
 Expected runtime: ~5–10 minutes on a laptop (FRED downloads dominate).
 
 All scripts write to `outputs/` in the repo root. The committed `outputs/` folder contains the reference results from the write-up — re-running will overwrite with your freshly-computed results.
+
+### Dependency strategy
+
+- **`requirements.txt`** — 8 direct dependencies pinned to versions verified end-to-end. Transitive dependencies resolve automatically, which keeps installs working across platforms and minor CA/SSL bundle updates.
+- **`requirements-lock.txt`** — full `pip freeze` snapshot from the verification environment. Use this if you want byte-for-byte reproducibility rather than just a working install.
 
 ## Full Validation Suite
 
@@ -111,7 +118,8 @@ Each script loads FRED and ETF data through `regime_pipeline`'s helper functions
 ├── README.md
 ├── LICENSE                       MIT
 ├── .gitignore
-├── requirements.txt
+├── requirements.txt              8 direct dependencies, pinned
+├── requirements-lock.txt         Full frozen environment (optional)
 ├── regime_pipeline.py            Core pipeline (data → regimes → ridge → portfolio)
 ├── ic_validation.py              M1: Information Coefficient decomposition
 ├── negative_control.py           M2: Cross-sectional permutation test
