@@ -1,8 +1,18 @@
-numpy>=1.24,<3.0
-pandas>=2.0,<3.0
-scipy>=1.10
-scikit-learn>=1.3
-matplotlib>=3.7
-seaborn>=0.12
-pandas-datareader>=0.10
-yfinance>=0.2
+# Direct dependencies, pinned to versions verified to run end-to-end
+# (based on independent verification run, April 2026).
+#
+# These are the packages the scripts directly import. Transitive dependencies
+# are resolved by pip and intentionally not pinned here, so minor updates
+# (e.g. certifi CA bundle refreshes) don't break installs on different platforms.
+#
+# If you need a fully locked environment, generate one with:
+#   pip freeze > requirements-lock.txt
+
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+scikit-learn==1.7.2
+matplotlib==3.10.8
+seaborn==0.13.2
+pandas-datareader==0.10.0
+yfinance==1.3.0
