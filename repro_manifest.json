@@ -1,0 +1,133 @@
+{
+  "manifest_version": "1.0",
+  "manifest_date": "2026-04-18",
+  "repo_url": "https://github.com/klmtseng/regime-conditioned-allocation",
+  "paper_replicated": {
+    "citation": "Oliveira et al., Tactical Asset Allocation with Macroeconomic Regime Detection",
+    "arxiv_id": "2503.11499",
+    "url": "https://arxiv.org/abs/2503.11499"
+  },
+  "summary": "Headline numbers in README come from four independent milestone runs executed between 2026-03-13 and 2026-03-23. This manifest documents which script, data coverage, and seed policy produced each reported figure. See README 'Reproducibility Notes' for known sources of drift across reruns.",
+  "headline_runs": [
+    {
+      "milestone_id": "phase-2b-gap-closing",
+      "run_date": "2026-03-13",
+      "script": "gap_closing.py",
+      "purpose": "Extended FRED coverage run that produces the IS/OOS Sharpe headline numbers.",
+      "data_coverage": {
+        "fred_series_attempted": 128,
+        "fred_series_downloaded": 124,
+        "fred_series_after_transforms": 104
+      },
+      "key_outputs": {
+        "in_sample_sharpe_ridge_lo_l3": 0.966,
+        "oos_sharpe_ridge_lo_l3": 1.645,
+        "oos_window_start": "2023-01"
+      },
+      "reference_output_files": [
+        "outputs/gap_closing_results.json"
+      ],
+      "seed_policy": "KMeans(random_state=42). Ridge in rolling walk-forward uses alpha=1.0 deterministically.",
+      "notes": "Not reproduced by 'python regime_pipeline.py' alone; run 'python gap_closing.py' to regenerate."
+    },
+    {
+      "milestone_id": "m1-ic-validation",
+      "run_date": "2026-03-23",
+      "script": "ic_validation.py",
+      "purpose": "Per-ETF and per-regime Information Coefficient decomposition.",
+      "data_coverage": {
+        "fred_series_attempted": 84,
+        "fred_series_downloaded_typical": 76,
+        "fred_series_after_transforms": "approximately 69"
+      },
+      "key_outputs": {
+        "ic_xlb": 0.102,
+        "ic_xly": 0.091,
+        "ic_xlp": -0.082,
+        "ic_xlu": -0.081,
+        "best_regime_ic_reflationary_boom": 0.118,
+        "best_regime_n": 32
+      },
+      "reference_output_files": [
+        "outputs/ic_per_etf.csv",
+        "outputs/ic_per_regime.csv",
+        "outputs/ic_monthly_timeseries.csv",
+        "outputs/ic_validation_report.md"
+      ],
+      "seed_policy": "Inherits KMeans(random_state=42) from regime_pipeline. No explicit seed for IC computation itself (Spearman rank is deterministic given inputs).",
+      "notes": "IC magnitudes are sensitive to FRED data revisions because full-sample K-means centroids (and therefore historical regime labels) shift when input data changes."
+    },
+    {
+      "milestone_id": "m2-cross-sectional-permutation",
+      "run_date": "2026-03-23",
+      "script": "negative_control.py",
+      "purpose": "Cross-sectional permutation test: shuffle regime labels across time and re-run the ridge forecasting step to build a null distribution of strategy Sharpe.",
+      "data_coverage": "Same as M1 IC validation.",
+      "key_outputs": {
+        "observed_sharpe": 1.424,
+        "shuffled_95th_percentile": 1.4258,
+        "empirical_p_value": 0.055,
+        "n_permutations": 200
+      },
+      "reference_output_files": [
+        "outputs/negative_control_distribution.csv",
+        "outputs/negative_control_plot.png",
+        "outputs/negative_control_report.md"
+      ],
+      "seed_policy": "N_PERMUTATIONS=200. BASE_SEED=20260323. Each permutation i uses np.random.RandomState(BASE_SEED + i), making the distribution fully reproducible given the same input data.",
+      "notes": "p = 0.055 is borderline at the conventional 0.05 threshold. This p-value is DIFFERENT from the pipeline-internal permutation test in regime_pipeline.py (which is unseeded and legacy). The README's reported p comes from THIS script."
+    },
+    {
+      "milestone_id": "m3-benchmark-distance",
+      "run_date": "2026-03-23",
+      "script": "benchmark_distance.py",
+      "purpose": "Per-ETF RMSFE vs. Random Walk and AR(1) baselines, both in-sample and out-of-sample.",
+      "data_coverage": "Same as M1 IC validation.",
+      "key_outputs": {
+        "aggregate_oos_rmsfe_ratio_ridge_vs_rw": 0.9912,
+        "interpretation": "Essentially indistinguishable from random walk on point forecasts; edge is in cross-sectional ranking."
+      },
+      "reference_output_files": [
+        "outputs/benchmark_distance.csv",
+        "outputs/benchmark_distance_oos.csv",
+        "outputs/benchmark_distance_report.md"
+      ],
+      "seed_policy": "Inherits from regime_pipeline.",
+      "notes": "Confirms the decomposition claim: ridge beats RW on ranking but not on absolute magnitude."
+    }
+  ],
+  "known_non_determinism": [
+    {
+      "location": "regime_pipeline.py around line 604",
+      "description": "Internal permutation test uses np.random.permutation(orig_labels) without a fixed seed. Empirical p-value from this path will drift across reruns.",
+      "status": "legacy / exploratory path; NOT the source of the README's p ≈ 0.055. That figure is from negative_control.py which is seeded.",
+      "recommended_fix": "Fix a seed (e.g. BASE_SEED=20260323 to match negative_control.py) or remove this path."
+    },
+    {
+      "location": "FRED and yfinance public endpoints",
+      "description": "Historical values are subject to revision. FRED series availability can change over time (currently ~8 series fail in the baseline pipeline).",
+      "status": "external factor, not a code bug. Documented in README 'Reproducibility Notes'.",
+      "recommended_fix": "None possible in code; users who need a fixed data snapshot can pin FRED vintage data externally."
+    }
+  ],
+  "public_data_sources": {
+    "fred": {
+      "access": "pandas_datareader public endpoint",
+      "api_key_required": false,
+      "baseline_coverage": "76 series typically successful; 8 series currently unavailable (x-suffix exchange rates: EXSZUSx, EXJPUSx, EXUSUKx, EXCAUSx; plus OILPRICEx, AMDMNOx, ANDENOx, CONSPI)",
+      "gap_closing_coverage": "Gap-closing run maps some unavailable tickers to alternatives (e.g. OILPRICEx -> MCOILWTICO, EX*x -> DEX*) and reaches 104 transformed variables."
+    },
+    "yfinance": {
+      "access": "yfinance library",
+      "universe": ["SPY", "XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"],
+      "frequency": "monthly returns"
+    },
+    "nber": {
+      "access": "via FRED series USREC",
+      "purpose": "Recession dating for stress-test and Type I/II analysis."
+    }
+  },
+  "no_proprietary_data": true,
+  "no_employer_strategies_used": true,
+  "license": "MIT"
+}
